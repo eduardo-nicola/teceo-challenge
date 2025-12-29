@@ -1,6 +1,7 @@
-import { CreateDateColumn, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import { CreateDateColumn, Index, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
 
 export default class BaseModel {
+  @Index()
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
