@@ -18,56 +18,41 @@ export default class ProductColorsService {
   }
 
   async list(filter: ListProductColorsFilter): Promise<Page<ListProductColorsDTO>> {
+    // Contagem otimizada
+    const countQueryBuilder = await this.createQueryBuilder().select('productColor.id').getCount();
+  
     const queryBuilder = this.createQueryBuilder()
-      .leftJoinAndSelect('productColor.product', 'product')
+      .innerJoinAndSelect('productColor.product', 'product')
+      .innerJoinAndSelect('productColor.color', 'color')
       .orderBy('product.name', 'ASC')
       .addOrderBy('productColor.id', 'ASC');
 
-    filter.paginate(queryBuilder);
     filter.createWhere(queryBuilder);
+    filter.paginate(queryBuilder);
 
-    const [productColors, total] = await queryBuilder.getManyAndCount();
-    const productColorsWithColors = await this.getColorsForProductColors(productColors);
-    const productColorsWithPrices = await this.getPricesForProductColors(productColorsWithColors);
+    const productColors = await queryBuilder.getMany();
 
-    return Page.of(productColorsWithPrices, total);
-  }
-
-  async getColorsForProductColors(productColors: ProductColor[]) {
-    for (const productColor of productColors) {
-      const productColorWithColor = await this.createQueryBuilder()
-        .leftJoinAndSelect('productColor.color', 'color')
-        .where('productColor.id = :id', { id: productColor.id })
-        .orderBy('lower(color.name)', 'ASC')
-        .getOneOrFail();
-
-      const correctProductColor = productColors.find((pc) => pc.id === productColor.id);
-
-      if (correctProductColor) {
-        correctProductColor.color = productColorWithColor.color;
-      }
+    if (productColors.length === 0) {
+      return Page.of([], countQueryBuilder);
     }
 
-    return productColors;
-  }
+    const ids = productColors.map(pc => pc.id);
+    const prices = await this.createQueryBuilder()
+      .select('productColor.id', 'id')
+      .addSelect('COALESCE(MIN(sku.price), 0)', 'price')
+      .leftJoin('productColor.skus', 'sku')
+      .where('productColor.id IN (:...ids)', { ids })
+      .groupBy('productColor.id')
+      .getRawMany();
 
-  async getPricesForProductColors(productColors: ProductColor[]): Promise<ListProductColorsDTO[]> {
-    const productColorsWithPrices: ListProductColorsDTO[] = [];
+    const priceMap = new Map(prices.map(p => [p.id, Number(p.price)]));
 
-    for (const productColor of productColors) {
-      const productColorWithPrices = await this.createQueryBuilder()
-        .leftJoinAndSelect('productColor.skus', 'sku')
-        .where('productColor.id = :id', { id: productColor.id })
-        .getMany();
+    // Mapeia para DTO com preços
+    const productColorsWithPrices: ListProductColorsDTO[] = productColors.map(productColor => ({
+      ...productColor,
+      price: priceMap.get(productColor.id) || 0,
+    }));
 
-      const skuPrices = productColorWithPrices.flatMap((pc) => pc.skus.map((sku) => sku.price));
-
-      productColorsWithPrices.push({
-        ...productColor,
-        price: Math.min(...skuPrices),
-      });
-    }
-
-    return productColorsWithPrices;
+    return Page.of(productColorsWithPrices, countQueryBuilder);
   }
 }
