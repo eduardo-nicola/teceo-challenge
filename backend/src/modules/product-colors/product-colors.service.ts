@@ -32,10 +32,6 @@ export default class ProductColorsService {
 
     const productColors = await queryBuilder.getMany();
 
-    if (productColors.length === 0) {
-      return Page.of([], countQueryBuilder);
-    }
-
     const ids = productColors.map(pc => pc.id);
     const prices = await this.createQueryBuilder()
       .select('productColor.id', 'id')
