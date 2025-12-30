@@ -17,6 +17,13 @@
   - cálculo de preço apenas para os IDs retornados, evitando varrer ~43M de registros em `skus`.
 - Redução de latência observada nas APIs (≈120–300ms).
 
+#### 3. Índices de performance adicionais (GIN/TRGM e compostos)
+- Habilitado `pg_trgm` para suporte a índices GIN com trigramas.
+- Índices em `product_colors(product_id)` e `product_colors(color_id)` para acelerar JOINs.
+- Índice composto em `skus(product_color_id, price)` para filtros/ordenação por preço.
+- Índices em `products(name)` (btree) e GIN TRGM em `products(code)` e `products(name)` para busca textual rápida.
+- Melhora geral em listagens, buscas e agregações.
+
 ### Frontend
 #### 1. Suporte a `.env` no frontend
 - Adicionada configuração via variáveis de ambiente (`.env`), facilitando parametrização por ambiente sem necessidade de rebuild.
@@ -27,3 +34,7 @@
 
 #### 3. `React.StrictMode` condicional no `main.tsx`
 - Aplicado somente em desenvolvimento, mantendo checagens durante o dev e evitando efeitos duplicados em produção.
+
+#### 4. Componente reutilizável `GlobalVirtualizer`
+- Encapsula `useWindowVirtualizer` com `rowCount`, `rowSize`, `overscan` e `itemsPerRow`.
+- Renderiza apenas linhas visíveis, reduzindo re-renderizações em grids grandes.

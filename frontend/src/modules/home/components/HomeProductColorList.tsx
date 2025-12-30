@@ -1,9 +1,9 @@
 import { CircularProgress, Grid, Skeleton, Stack, useMediaQuery, useTheme } from '@mui/material';
-import { useWindowVirtualizer } from '@tanstack/react-virtual';
 import useInfiniteScroll from '../../../hooks/useInfiniteScroll';
 import { ProductColorDTO } from '../interfaces/product-color.dto';
 import HomeProductColorListItem from './HomeProductColorListItem';
 import useHomeProductColorList from './hooks/useHomeProductColorList';
+import GlobalVirtualizer from '../../global/components/GlobalVirtualizer';
 
 const HomeProductColorList = () => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } =
@@ -19,11 +19,6 @@ const HomeProductColorList = () => {
   const productColors = status === 'success' ? data.pages.flat() : [];
   const rowCount = Math.ceil(productColors.length / itemsPerRow);
   const rowSize = 392;
-  const rowVirtualizer = useWindowVirtualizer({
-    count: rowCount,
-    estimateSize: () => rowSize,
-    overscan: 6,
-  });
 
   if (status === 'pending') {
     return (
@@ -43,35 +38,22 @@ const HomeProductColorList = () => {
 
   return (
     <>
-      <div style={{ height: `${rowCount * rowSize}px`, position: 'relative' }}>
-        {rowVirtualizer.getVirtualItems().map((vRow) => {
-          const startIndex = vRow.index * itemsPerRow;
-
-          const rowItems = productColors.slice(startIndex, startIndex + itemsPerRow);
-
-          return (
-            <div
-              key={vRow.key}
-              data-index={vRow.index}
-              style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                transform: `translateY(${vRow.start}px)`,
-              }}
-            >
-              <Grid container spacing={2}>
-                {rowItems.map((productColor) => (
-                  <Grid size={{ xs: 6, sm: 4, md: 3 }} key={productColor.id} data-id={productColor.id}>
-                    <HomeProductColorListItem item={ProductColorDTO.toCardItem(productColor)} />
-                  </Grid>
-                ))}
+      <GlobalVirtualizer
+        rowCount={rowCount}
+        rowSize={rowSize}
+        overscan={6}
+        itemsPerRow={itemsPerRow}
+        dataList={productColors}
+        renderRow={(rowItems) => (
+          <Grid container spacing={2}>
+            {rowItems.map((productColor) => (
+              <Grid size={{ xs: 6, sm: 4, md: 3 }} key={productColor.id} data-id={productColor.id}>
+                <HomeProductColorListItem item={ProductColorDTO.toCardItem(productColor)} />
               </Grid>
-            </div>
-          );
-        })}
-      </div>
+            ))}
+          </Grid>
+        )}
+      />
 
       <div ref={loaderRef} style={{ height: 10 }} />
 
