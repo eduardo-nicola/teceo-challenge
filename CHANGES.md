@@ -18,3 +18,12 @@
 - Redução de latência observada nas APIs (≈120–300ms).
 
 ### Frontend
+#### 1. Suporte a `.env` no frontend
+- Adicionada configuração via variáveis de ambiente (`.env`), facilitando parametrização por ambiente sem necessidade de rebuild.
+
+#### 2. Virtualização e infinite scroll com `@tanstack/react-virtual`
+- Biblioteca adicionada e integrada em `HomeProductColorList.tsx` usando `useWindowVirtualizer` para renderizar apenas itens visíveis.
+- Scroll infinito com carregamento incremental, reduzindo memória e tempo de renderização em listas grandes.
+
+#### 3. `React.StrictMode` condicional no `main.tsx`
+- Aplicado somente em desenvolvimento, mantendo checagens durante o dev e evitando efeitos duplicados em produção.
