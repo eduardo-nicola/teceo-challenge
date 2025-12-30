@@ -2,7 +2,7 @@
 
 ## Melhorias Implementadas
 
-### Performance no Backend
+###  Backend
 
 #### 1. Indexação da coluna `id` na BaseModel
 - Adicionado índice na coluna `id` (chave primária) em todas as tabelas que herdam de `BaseModel`.
@@ -16,3 +16,5 @@
   - listagem paginada com `innerJoin` de `product` e `color`,
   - cálculo de preço apenas para os IDs retornados, evitando varrer ~43M de registros em `skus`.
 - Redução de latência observada nas APIs (≈120–300ms).
+
+### Frontend
